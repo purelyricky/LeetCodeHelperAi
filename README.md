@@ -1,10 +1,15 @@
+<center>
+
 # LeetCode Helper 🚀
+
+</center>
+
+![LeetCode Helper Logo](assets/leetcodehelper.png)
 
 ## Overview
 
 LeetCode Helper is an innovative desktop application designed to transform your algorithm and data structures learning experience. By leveraging advanced AI technologies, this app provides comprehensive, educational solutions to coding problems, helping you understand not just the solution, but the underlying concepts and problem-solving strategies.
 
-![LeetCode Helper Logo](assets/iconsvg.svg)
 
 ## 🌟 Key Features
 
@@ -123,7 +128,7 @@ Please use GitHub Issues to report bugs or suggest features.
 
 ## 📄 License
 
-[MIT License](LICENSE)
+[GNU GENERAL PUBLIC LICENSE](LICENSE)
 
 ## 🌟 Star the Repository!
 
