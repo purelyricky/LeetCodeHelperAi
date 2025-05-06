@@ -420,7 +420,6 @@ function hideMainWindow(): void {
 
 function showMainWindow(): void {
   if (!state.mainWindow?.isDestroyed()) {
-    // Log the current state before showing
     console.log(`Showing main window. Current opacity: ${state.mainWindow.getOpacity()}, isVisible: ${state.isWindowVisible}`);
     
     if (state.windowPosition && state.windowSize) {
@@ -430,25 +429,31 @@ function showMainWindow(): void {
       });
     }
     
-    // Set window properties in the correct order
+    // Set window properties in the correct order for reliable visibility
     state.mainWindow.setIgnoreMouseEvents(false);
-    state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1);
+    state.mainWindow.setAlwaysOnTop(true, "floating", 1); // Use floating level
     state.mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     state.mainWindow.setContentProtection(false);
     
-    // IMPORTANT: Use multiple show methods for maximum reliability
+    // IMPROVED: More reliable window showing sequence
     state.mainWindow.show();
     state.mainWindow.moveTop();
-    state.mainWindow.focus();
     
-    // Get saved opacity, but enforce a higher minimum for visibility
+    // Short delay to ensure window manager has registered the window before focus
+    setTimeout(() => {
+      if (!state.mainWindow?.isDestroyed()) {
+        state.mainWindow.focus();
+      }
+    }, 50);
+    
+    // Get saved opacity but with better minimum thresholds
     const savedOpacity = configHelper.getOpacity();
     
-    // Force a higher minimum in production
+    // Force higher minimum opacity in production - CRITICAL FIX
     const isProduction = !process.env.NODE_ENV?.includes('development');
     const targetOpacity = isProduction 
-      ? Math.max(0.9, savedOpacity) // Higher minimum in production
-      : Math.max(0.8, savedOpacity); // Dev environment minimum
+      ? Math.max(0.95, savedOpacity) // Much higher minimum in production
+      : Math.max(0.8, savedOpacity);  // Dev environment minimum
     
     console.log(`Setting window opacity to ${targetOpacity} (${isProduction ? 'production' : 'development'} mode)`);
     state.mainWindow.setOpacity(targetOpacity);
@@ -457,6 +462,7 @@ function showMainWindow(): void {
     console.log('Window shown with opacity:', targetOpacity);
   }
 }
+
 
 function forceShowWindow(): void {
   if (!state.mainWindow?.isDestroyed()) {
@@ -483,19 +489,32 @@ function forceShowWindow(): void {
       });
     }
     
-    // ENHANCED VISIBILITY: More aggressive approach to ensure window shows
+    // ENHANCED VISIBILITY: Apply multiple techniques to force visibility
     state.mainWindow.setIgnoreMouseEvents(false);
-    state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1);
+    state.mainWindow.setAlwaysOnTop(true, "floating", 1); // Use floating level for better visibility
     state.mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     state.mainWindow.setSkipTaskbar(false); // Ensure it appears in taskbar/dock
     
-    // Use a sequence of show commands for maximum reliability
+    // IMPORTANT: The ordering here matters for platform compatibility
     state.mainWindow.show();
-    state.mainWindow.showInactive(); // Fallback show method
-    state.mainWindow.moveTop();
-    state.mainWindow.focus();
+    state.mainWindow.showInactive(); // Fallback method
     
-    // Set to full opacity and ensure state reflects visibility
+    // Force activation and focus - important for some window managers
+    state.mainWindow.setAlwaysOnTop(false);
+    state.mainWindow.setAlwaysOnTop(true, "floating", 1);
+    
+    // Force window to be on top (essential for restoring from zero opacity)
+    state.mainWindow.moveTop();
+    
+    // Create a slight delay before focus to ensure window manager has registered the window
+    setTimeout(() => {
+      if (!state.mainWindow?.isDestroyed()) {
+        state.mainWindow.focus();
+        state.mainWindow.focusOnWebView();
+      }
+    }, 100);
+    
+    // Set to full opacity AFTER showing window
     state.mainWindow.setOpacity(1.0);
     state.isWindowVisible = true;
     
@@ -503,6 +522,16 @@ function forceShowWindow(): void {
     configHelper.setOpacity(1.0);
     
     console.log('Window forced to show with opacity 1.0 - visibility enforced');
+    
+    // Secondary attempt after a short delay to overcome potential platform-specific issues
+    setTimeout(() => {
+      if (!state.mainWindow?.isDestroyed()) {
+        state.mainWindow.show();
+        state.mainWindow.moveTop();
+        state.mainWindow.focus();
+        state.mainWindow.setOpacity(1.0);
+      }
+    }, 300);
   }
 }
 
@@ -651,9 +680,38 @@ async function initializeApp() {
       isDev ? "development" : "production",
       "mode"
     )
+    if (!isDev) {
+      console.log("Setting up visibility recovery timer for production mode");
+      
+      // This timer runs every few seconds to detect and fix invisibility issues
+      const visibilityRecoveryTimer = setInterval(() => {
+        const mainWindow = getMainWindow();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const currentOpacity = mainWindow.getOpacity();
+          
+          // If opacity is too low, restore it (but not during screenshot)
+          if (currentOpacity < 0.3 && state.isWindowVisible) {
+            console.log("Recovery timer detected low opacity, restoring visibility");
+            mainWindow.setOpacity(1.0);
+            mainWindow.show();
+            mainWindow.moveTop();
+            
+            // Update config to prevent future issues
+            configHelper.setOpacity(1.0);
+          }
+        }
+      }, 5000); // Check every 5 seconds
+      
+      // Clean up timer when app quits
+      app.on('will-quit', () => {
+        clearInterval(visibilityRecoveryTimer);
+      });
+    }
+    
+    // Continue with existing initialization...
   } catch (error) {
-    console.error("Failed to initialize application:", error)
-    app.quit()
+    console.error("Failed to initialize application:", error);
+    app.quit();
   }
 }
 

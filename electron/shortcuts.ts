@@ -12,39 +12,49 @@ export class ShortcutsHelper {
   private adjustOpacity(delta: number): void {
     const mainWindow = this.deps.getMainWindow();
     if (!mainWindow) return;
-
+  
     let currentOpacity = mainWindow.getOpacity();
-    // Print the current opacity for debugging
     console.log(`Current opacity before adjustment: ${currentOpacity}`);
-
-    // Always force a more significant step for very low opacity
+  
+    // IMPROVED: Much more aggressive increase when opacity is very low
     let newOpacity;
     if (currentOpacity < 0.3 && delta > 0) {
-      // When increasing from low opacity, jump to at least 0.7
-      newOpacity = Math.max(0.7, currentOpacity + delta);
-      console.log("Low opacity detected, applying larger increase to ensure visibility");
+      // When increasing from very low opacity (nearly invisible),
+      // jump straight to 1.0 for immediate visibility
+      newOpacity = 1.0;
+      console.log("Low opacity detected, jumping to full opacity for immediate visibility");
     } else {
+      // Normal adjustments with safeguards
       newOpacity = Math.max(0.1, Math.min(1.0, currentOpacity + delta));
     }
-
+  
     console.log(`Adjusting opacity from ${currentOpacity} to ${newOpacity}`);
-
+  
     // Apply opacity change
     mainWindow.setOpacity(newOpacity);
-
+  
     // Save the opacity setting to config
     try {
       configHelper.setOpacity(newOpacity);
     } catch (error) {
       console.error('Error saving opacity to config:', error);
     }
-
-    // Enhanced visibility handling
+  
+    // Enhanced visibility handling - make sure window becomes visible and active
     if (newOpacity > 0.1) {
-      // If opacity is increased, ensure the window is fully visible
-      console.log("Opacity increased, ensuring window is visible");
+      console.log("Opacity increased, ensuring window is visible and active");
+      
+      // IMPORTANT: The ordering here matters
       mainWindow.show();
       mainWindow.moveTop();
+      
+      // Ensure proper focus
+      setTimeout(() => {
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.focus();
+        }
+      }, 50);
+      
       state.isWindowVisible = true;
     }
   }
@@ -184,7 +194,26 @@ export class ShortcutsHelper {
     app.on("will-quit", () => {
       globalShortcut.unregisterAll()
     })
-    // Add this in the registerGlobalShortcuts method
+
+    globalShortcut.register("CommandOrControl+Shift+V", () => {
+      console.log("EMERGENCY VISIBILITY triggered with Cmd/Ctrl+Shift+V");
+      const mainWindow = this.deps.getMainWindow();
+      if (mainWindow) {
+        // Directly set opacity to 1.0 and force window to be visible
+        mainWindow.setOpacity(1.0);
+        mainWindow.show();
+        mainWindow.moveTop();
+        mainWindow.focus();
+        
+        // Update state and config
+        state.isWindowVisible = true;
+        configHelper.setOpacity(1.0);
+        
+        // Also call the main forceShowWindow for complete activation
+        this.deps.forceShowWindow();
+      }
+    })
+    // Add the existing force visibility shortcut
     globalShortcut.register("CommandOrControl+Shift+B", () => {
       console.log("Command/Ctrl + Shift + B pressed. Forcing window visibility.");
       this.deps.forceShowWindow();
