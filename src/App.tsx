@@ -133,6 +133,14 @@ function App() {
           setUser(session?.user || null);
           setIsFirstVisit(false);
           setShowAuthPage(false);
+          
+          // Force window visibility after authentication
+          if (window.electronAPI && typeof window.electronAPI.forceShowWindow === 'function') {
+            console.log("Forcing window visibility after login");
+            window.electronAPI.forceShowWindow().catch((error: any) => {
+              console.error("Failed to force window visibility:", error);
+            });
+          }
         } else if (event === "SIGNED_OUT") {
           setUser(null);
           setIsFirstVisit(true);

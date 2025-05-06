@@ -110,6 +110,7 @@ export interface IIpcHandlerDeps {
   moveWindowRight: () => void
   moveWindowUp: () => void
   moveWindowDown: () => void
+  forceShowWindow: () => void; // Added this line
 }
 
 // Initialize helpers
@@ -359,14 +360,22 @@ async function createWindow(): Promise<void> {
   // Always make sure window is shown first
   state.mainWindow.showInactive(); // Use showInactive for consistency
   
-  if (savedOpacity <= 0.1) {
-    console.log('Initial opacity too low, setting to 0 and hiding window');
-    state.mainWindow.setOpacity(0);
-    state.isWindowVisible = false;
-  } else {
-    console.log(`Setting initial opacity to ${savedOpacity}`);
-    state.mainWindow.setOpacity(savedOpacity);
+  if (!isDev) {
+    state.mainWindow.show();
+    state.mainWindow.focus();
+    state.mainWindow.setOpacity(1.0);
     state.isWindowVisible = true;
+    console.log("Production: Setting window visible with opacity 1.0");
+    
+    // Save this to config
+    configHelper.setOpacity(1.0);
+  } else {
+    // In development, use the saved opacity but ensure it's at least 0.8
+    const savedOpacity = configHelper.getOpacity();
+    const visibleOpacity = Math.max(0.8, savedOpacity);
+    state.mainWindow.setOpacity(visibleOpacity);
+    state.isWindowVisible = true;
+    console.log(`Development: Setting window visible with opacity ${visibleOpacity}`);
   }
 }
 
@@ -394,9 +403,12 @@ function handleWindowClosed(): void {
 // Window visibility functions
 function hideMainWindow(): void {
   if (!state.mainWindow?.isDestroyed()) {
+    console.log('Hiding window');
     const bounds = state.mainWindow.getBounds();
     state.windowPosition = { x: bounds.x, y: bounds.y };
     state.windowSize = { width: bounds.width, height: bounds.height };
+    
+    // Set ignore mouse events first, then opacity
     state.mainWindow.setIgnoreMouseEvents(true, { forward: true });
     state.mainWindow.setOpacity(0);
     state.isWindowVisible = false;
@@ -406,23 +418,78 @@ function hideMainWindow(): void {
 
 function showMainWindow(): void {
   if (!state.mainWindow?.isDestroyed()) {
+    // Log the current state before showing
+    console.log(`Showing main window. Current opacity: ${state.mainWindow.getOpacity()}, isVisible: ${state.isWindowVisible}`);
+    
     if (state.windowPosition && state.windowSize) {
       state.mainWindow.setBounds({
         ...state.windowPosition,
         ...state.windowSize
       });
     }
+    
+    // Set window properties in the correct order
     state.mainWindow.setIgnoreMouseEvents(false);
     state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1);
     state.mainWindow.setVisibleOnAllWorkspaces(true, {
       visibleOnFullScreen: true
     });
-    state.mainWindow.setContentProtection(false);  //A VERY IMPORTANT LINE OF CODE
-    state.mainWindow.setOpacity(0); // Set opacity to 0 before showing
-    state.mainWindow.showInactive(); // Use showInactive instead of show+focus
-    state.mainWindow.setOpacity(1); // Then set opacity to 1 after showing
+    state.mainWindow.setContentProtection(false);
+    
+    // IMPORTANT: Use a more reliable sequence for showing the window:
+    // 1. Show first with current opacity
+    state.mainWindow.show(); // Use show() instead of showInactive() to ensure focus
+    state.mainWindow.moveTop(); // Ensure window is on top
+    state.mainWindow.focus();  // Explicitly focus the window
+    
+    // 2. Only then set opacity to 1
+    const savedOpacity = configHelper.getOpacity();
+    const targetOpacity = Math.max(0.8, savedOpacity); // Ensure we never go below 0.8 when showing
+    
+    console.log(`Setting window opacity to ${targetOpacity}`);
+    state.mainWindow.setOpacity(targetOpacity);
+    
     state.isWindowVisible = true;
-    console.log('Window shown with showInactive(), opacity set to 1');
+    console.log('Window shown with opacity:', targetOpacity);
+  }
+}
+
+function forceShowWindow(): void {
+  if (!state.mainWindow?.isDestroyed()) {
+    console.log('Force showing window');
+    
+    // Ensure window is on screen and visible
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width, height } = primaryDisplay.workAreaSize;
+    
+    // Get current bounds
+    const bounds = state.mainWindow.getBounds();
+    
+    // Ensure window is on screen
+    const x = Math.min(Math.max(bounds.x, 0), width - 200);
+    const y = Math.min(Math.max(bounds.y, 0), height - 200);
+    
+    // Set bounds if needed to ensure visibility
+    if (x !== bounds.x || y !== bounds.y) {
+      state.mainWindow.setBounds({
+        x, 
+        y, 
+        width: bounds.width, 
+        height: bounds.height
+      });
+    }
+    
+    // Show and focus with high opacity
+    state.mainWindow.show();
+    state.mainWindow.moveTop();
+    state.mainWindow.focus();
+    state.mainWindow.setOpacity(1.0);
+    state.isWindowVisible = true;
+    
+    // Save this high opacity to config
+    configHelper.setOpacity(1.0);
+    
+    console.log('Window forced to show with opacity 1.0');
   }
 }
 
@@ -558,9 +625,8 @@ async function initializeApp() {
       ),
       moveWindowUp: () => moveWindowVertical((y) => y - state.step),
       moveWindowDown: () => moveWindowVertical((y) => y + state.step),
-      toggleClickThrough: function (): void {
-        throw new Error("Function not implemented.")
-      }
+      toggleClickThrough: toggleClickThrough, // Updated this line
+      forceShowWindow: forceShowWindow // Added this line
     })
     await createWindow()
     state.shortcutsHelper?.registerGlobalShortcuts()
