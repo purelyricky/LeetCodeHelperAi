@@ -1,10 +1,8 @@
-<center>
+<div align="center">
+  <h1>🚀 LeetCode Helper 🚀</h1>
+  <p>Transform Your Algorithm Learning Experience</p>
 
-# LeetCode Helper 🚀
-
-</center>
-
-![LeetCode Helper Logo](assets/leetcodehelper.png)
+![LeetCode Helper Logo](assets/iconsvg.svg)
 
 ## Overview
 
