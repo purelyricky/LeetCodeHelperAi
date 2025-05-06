@@ -1,1 +1,4 @@
-export type Screenshot = {}; 
+export interface Screenshot {
+  path: string
+  preview: string
+}
