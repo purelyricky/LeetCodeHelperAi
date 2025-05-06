@@ -73,7 +73,7 @@ cd LeetCodeHelperAi
 npm install
 
 # Run in development mode
-npm run dev
+npm start
 ```
 
 ## 🚀 Getting Started
