@@ -12,44 +12,43 @@ export class ShortcutsHelper {
   private adjustOpacity(delta: number): void {
     const mainWindow = this.deps.getMainWindow();
     if (!mainWindow) return;
-    
+
     let currentOpacity = mainWindow.getOpacity();
     // Print the current opacity for debugging
     console.log(`Current opacity before adjustment: ${currentOpacity}`);
-    
-    // Ensure reasonable bounds and make changes more noticeable
-    // Use larger step for low opacity to improve visibility
+
+    // Always force a more significant step for very low opacity
     let newOpacity;
     if (currentOpacity < 0.3 && delta > 0) {
-      // When increasing from low opacity, jump to at least 0.5
-      newOpacity = Math.max(0.5, currentOpacity + delta);
+      // When increasing from low opacity, jump to at least 0.7
+      newOpacity = Math.max(0.7, currentOpacity + delta);
+      console.log("Low opacity detected, applying larger increase to ensure visibility");
     } else {
       newOpacity = Math.max(0.1, Math.min(1.0, currentOpacity + delta));
     }
-    
+
     console.log(`Adjusting opacity from ${currentOpacity} to ${newOpacity}`);
-    
+
     // Apply opacity change
     mainWindow.setOpacity(newOpacity);
-    
+
     // Save the opacity setting to config
     try {
       configHelper.setOpacity(newOpacity);
     } catch (error) {
       console.error('Error saving opacity to config:', error);
     }
-    
-    // Extra visibility handling
+
+    // Enhanced visibility handling
     if (newOpacity > 0.1) {
-      // If window is becoming visible but was hidden, make sure to show it
-      if (!this.deps.isVisible()) {
-        console.log("Window was hidden, making it visible");
-        mainWindow.show();
-        mainWindow.moveTop();
-        state.isWindowVisible = true;
-      }
+      // If opacity is increased, ensure the window is fully visible
+      console.log("Opacity increased, ensuring window is visible");
+      mainWindow.show();
+      mainWindow.moveTop();
+      state.isWindowVisible = true;
     }
   }
+
 
   public registerGlobalShortcuts(): void {
     globalShortcut.register("CommandOrControl+H", async () => {
@@ -138,7 +137,7 @@ export class ShortcutsHelper {
       console.log("Command/Ctrl + ] pressed. Increasing opacity.")
       this.adjustOpacity(0.1)
     })
-    
+
     // Zoom controls
     globalShortcut.register("CommandOrControl+-", () => {
       console.log("Command/Ctrl + - pressed. Zooming out.")
@@ -148,7 +147,7 @@ export class ShortcutsHelper {
         mainWindow.webContents.setZoomLevel(currentZoom - 0.5)
       }
     })
-    
+
     globalShortcut.register("CommandOrControl+0", () => {
       console.log("Command/Ctrl + 0 pressed. Resetting zoom.")
       const mainWindow = this.deps.getMainWindow()
@@ -156,7 +155,7 @@ export class ShortcutsHelper {
         mainWindow.webContents.setZoomLevel(0)
       }
     })
-    
+
     globalShortcut.register("CommandOrControl+=", () => {
       console.log("Command/Ctrl + = pressed. Zooming in.")
       const mainWindow = this.deps.getMainWindow()
@@ -165,7 +164,7 @@ export class ShortcutsHelper {
         mainWindow.webContents.setZoomLevel(currentZoom + 0.5)
       }
     })
-    
+
     // Delete last screenshot shortcut
     globalShortcut.register("CommandOrControl+L", () => {
       console.log("Command/Ctrl + L pressed. Deleting last screenshot.")
@@ -175,15 +174,20 @@ export class ShortcutsHelper {
         mainWindow.webContents.send("delete-last-screenshot")
       }
     })
-    
+
     globalShortcut.register("CommandOrControl+T", () => {
       console.log("Command/Ctrl + T pressed. Toggling click-through mode.")
       this.deps.toggleClickThrough()
     })
-    
+
     // Unregister shortcuts when quitting
     app.on("will-quit", () => {
       globalShortcut.unregisterAll()
     })
+    // Add this in the registerGlobalShortcuts method
+    globalShortcut.register("CommandOrControl+Shift+B", () => {
+      console.log("Command/Ctrl + Shift + B pressed. Forcing window visibility.");
+      this.deps.forceShowWindow();
+    });
   }
 }

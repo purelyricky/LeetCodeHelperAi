@@ -12,8 +12,19 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin') 
 
   // This function will be called when sign-in is successful 
-  const handleSignInSuccess = () => { 
-    onAuthSuccess(); 
+  const handleSignInSuccess = () => {
+    // Force window visibility right after authentication success
+    if (window.electronAPI && typeof window.electronAPI.forceShowWindow === 'function') {
+      console.log("Force showing window after successful authentication");
+      window.electronAPI.forceShowWindow().catch((error: any) => {
+        console.error("Error forcing window visibility after auth:", error);
+      });
+    }
+    
+    // Call the original callback after a short delay to ensure visibility
+    setTimeout(() => {
+      onAuthSuccess();
+    }, 100); 
   } 
   
   // This function will be called when sign-up is successful to switch to sign-in view 

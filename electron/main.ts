@@ -74,6 +74,7 @@ export interface IProcessingHelperDeps {
 }
 
 export interface IShortcutsHelperDeps {
+  forceShowWindow: any
   getMainWindow: () => BrowserWindow | null
   takeScreenshot: () => Promise<string>
   getImagePreview: (filepath: string) => Promise<string>
@@ -155,7 +156,8 @@ function initializeHelpers() {
       ),
     moveWindowUp: () => moveWindowVertical((y) => y - state.step),
     moveWindowDown: () => moveWindowVertical((y) => y + state.step),
-    toggleClickThrough: () => toggleClickThrough()
+    toggleClickThrough: () => toggleClickThrough(),
+    forceShowWindow: () => forceShowWindow()
   } as IShortcutsHelperDeps)
 }
 
@@ -431,22 +433,24 @@ function showMainWindow(): void {
     // Set window properties in the correct order
     state.mainWindow.setIgnoreMouseEvents(false);
     state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1);
-    state.mainWindow.setVisibleOnAllWorkspaces(true, {
-      visibleOnFullScreen: true
-    });
+    state.mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     state.mainWindow.setContentProtection(false);
     
-    // IMPORTANT: Use a more reliable sequence for showing the window:
-    // 1. Show first with current opacity
-    state.mainWindow.show(); // Use show() instead of showInactive() to ensure focus
-    state.mainWindow.moveTop(); // Ensure window is on top
-    state.mainWindow.focus();  // Explicitly focus the window
+    // IMPORTANT: Use multiple show methods for maximum reliability
+    state.mainWindow.show();
+    state.mainWindow.moveTop();
+    state.mainWindow.focus();
     
-    // 2. Only then set opacity to 1
+    // Get saved opacity, but enforce a higher minimum for visibility
     const savedOpacity = configHelper.getOpacity();
-    const targetOpacity = Math.max(0.8, savedOpacity); // Ensure we never go below 0.8 when showing
     
-    console.log(`Setting window opacity to ${targetOpacity}`);
+    // Force a higher minimum in production
+    const isProduction = !process.env.NODE_ENV?.includes('development');
+    const targetOpacity = isProduction 
+      ? Math.max(0.9, savedOpacity) // Higher minimum in production
+      : Math.max(0.8, savedOpacity); // Dev environment minimum
+    
+    console.log(`Setting window opacity to ${targetOpacity} (${isProduction ? 'production' : 'development'} mode)`);
     state.mainWindow.setOpacity(targetOpacity);
     
     state.isWindowVisible = true;
@@ -456,7 +460,7 @@ function showMainWindow(): void {
 
 function forceShowWindow(): void {
   if (!state.mainWindow?.isDestroyed()) {
-    console.log('Force showing window');
+    console.log('Force showing window - ensuring visibility');
     
     // Ensure window is on screen and visible
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -479,17 +483,26 @@ function forceShowWindow(): void {
       });
     }
     
-    // Show and focus with high opacity
+    // ENHANCED VISIBILITY: More aggressive approach to ensure window shows
+    state.mainWindow.setIgnoreMouseEvents(false);
+    state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1);
+    state.mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    state.mainWindow.setSkipTaskbar(false); // Ensure it appears in taskbar/dock
+    
+    // Use a sequence of show commands for maximum reliability
     state.mainWindow.show();
+    state.mainWindow.showInactive(); // Fallback show method
     state.mainWindow.moveTop();
     state.mainWindow.focus();
+    
+    // Set to full opacity and ensure state reflects visibility
     state.mainWindow.setOpacity(1.0);
     state.isWindowVisible = true;
     
-    // Save this high opacity to config
+    // Save high opacity to config
     configHelper.setOpacity(1.0);
     
-    console.log('Window forced to show with opacity 1.0');
+    console.log('Window forced to show with opacity 1.0 - visibility enforced');
   }
 }
 
