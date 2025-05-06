@@ -2,7 +2,7 @@
   <h1>🚀 LeetCode Helper 🚀</h1>
   <p>Transform Your Algorithm Learning Experience</p>
 
-![LeetCode Helper Logo](assets/iconsvg.svg)
+![LeetCode Helper Logo](assets/leetcodehelper.png)
 
 ## Overview
 
