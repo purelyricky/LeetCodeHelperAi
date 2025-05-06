@@ -93,7 +93,7 @@
       {
         "provider": "github",
         "owner": "purelyricky",
-        "repo": "leetcode-helper",
+        "repo": "LeetCodeHelperAi",
         "private": false,
         "releaseType": "release"
       }
@@ -121,8 +121,8 @@
     "coding practice",
     "programming tutorial"
   ],
-  "author": "LeetCode Helper Team",
-  "license": "MIT",
+  "author": "Ricky",
+  "license": "GPL-3.0-only",
   "description": "An educational desktop application to help you learn and understand algorithms through guided problem-solving.",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
