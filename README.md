@@ -1,6 +1,7 @@
 <div align="center">
   <h1>🚀 LeetCode Helper 🚀</h1>
-  <p>Transform Your Algorithm Learning Experience</p>
+  <p>Transform Your Algorithm Learning Experience(app preview)</p>
+</div>
 
 ![LeetCode Helper Logo](assets/leetcodehelper.png)
 
