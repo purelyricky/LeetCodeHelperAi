@@ -1,5 +1,11 @@
 <div align="center">
   <h1>🚀 LeetCode Helper 🚀</h1>
+  <a href="https://github.com/purelyricky/LeetCodeHelperAi/releases">
+    <img src="https://img.shields.io/github/v/release/purelyricky/LeetCodeHelperAi?color=blue&label=Version&logo=github&style=flat-square" alt="Latest Release">
+  </a>
+  <a href="https://github.com/purelyricky/LeetCodeHelperAi/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/purelyricky/LeetCodeHelperAi?color=green&style=flat-square" alt="GPL - 3.0 License">
+  </a>
   <p>Transform Your Algorithm Learning Experience(app preview)</p>
 </div>
 
@@ -99,7 +105,7 @@ npm run dev
 
 Supports multiple AI providers:
 - OpenAI (GPT-4o)
-- Google Gemini
+- Google Gemini (Provided free by Google)
 - Anthropic Claude
 
 Configure your API key in the Settings dialog.
@@ -118,8 +124,46 @@ Inspired by and special thanks to [Roy](https://x.com/im_roy_lee) for the origin
 ## 🔒 Privacy & Security
 
 - Local API key storage
+- No data collection
+- Secure, encrypted configuration
+
+## 🔒 Privacy & Security
+
+- Local API key storage
 - No data collection without consent
 - Secure, encrypted configuration
+
+## 🔔 Stay Updated
+
+### Release Notifications
+
+There are several ways to stay informed about the latest LeetCode Helper releases:
+
+1. **GitHub Notifications**
+   - Watch the repository: Click the "Watch" button at the top of the GitHub repository
+   - Select "All releases" to get notifications for new releases
+
+2. **GitHub Releases**
+   - Visit the [Releases page](https://github.com/purelyricky/LeetCodeHelperAi/releases)
+   - Click "Subscribe" to receive email notifications
+   - Use the "Watch" dropdown to select release notifications
+
+3. **GitHub Dependabot Alerts**
+   - Enable Dependabot alerts in the repository settings
+   - Receive automatic updates about security and version updates
+
+4. **RSS Feed**
+   - Subscribe to the releases RSS feed:
+     ```
+     https://github.com/purelyricky/LeetCodeHelperAi/releases.atom
+     ```
+
+### Auto-Update Feature
+
+The application includes an built-in auto-update mechanism:
+- Automatically checks for updates
+- Notifies you when a new version is available
+- Allows one-click updates within the application
 
 ## 🐛 Reporting Issues
 
