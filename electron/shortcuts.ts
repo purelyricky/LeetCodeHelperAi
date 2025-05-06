@@ -1,5 +1,5 @@
 import { globalShortcut, app } from "electron"
-import { IShortcutsHelperDeps } from "./main"
+import { IShortcutsHelperDeps, state } from "./main"
 import { configHelper } from "./ConfigHelper"
 
 export class ShortcutsHelper {
@@ -14,23 +14,40 @@ export class ShortcutsHelper {
     if (!mainWindow) return;
     
     let currentOpacity = mainWindow.getOpacity();
-    let newOpacity = Math.max(0.1, Math.min(1.0, currentOpacity + delta));
+    // Print the current opacity for debugging
+    console.log(`Current opacity before adjustment: ${currentOpacity}`);
+    
+    // Ensure reasonable bounds and make changes more noticeable
+    // Use larger step for low opacity to improve visibility
+    let newOpacity;
+    if (currentOpacity < 0.3 && delta > 0) {
+      // When increasing from low opacity, jump to at least 0.5
+      newOpacity = Math.max(0.5, currentOpacity + delta);
+    } else {
+      newOpacity = Math.max(0.1, Math.min(1.0, currentOpacity + delta));
+    }
+    
     console.log(`Adjusting opacity from ${currentOpacity} to ${newOpacity}`);
     
+    // Apply opacity change
     mainWindow.setOpacity(newOpacity);
     
-    // Save the opacity setting to config without re-initializing the client
+    // Save the opacity setting to config
     try {
-      const config = configHelper.loadConfig();
-      config.opacity = newOpacity;
-      configHelper.saveConfig(config);
+      configHelper.setOpacity(newOpacity);
     } catch (error) {
       console.error('Error saving opacity to config:', error);
     }
     
-    // If we're making the window visible, also make sure it's shown and interaction is enabled
-    if (newOpacity > 0.1 && !this.deps.isVisible()) {
-      this.deps.toggleMainWindow();
+    // Extra visibility handling
+    if (newOpacity > 0.1) {
+      // If window is becoming visible but was hidden, make sure to show it
+      if (!this.deps.isVisible()) {
+        console.log("Window was hidden, making it visible");
+        mainWindow.show();
+        mainWindow.moveTop();
+        state.isWindowVisible = true;
+      }
     }
   }
 
