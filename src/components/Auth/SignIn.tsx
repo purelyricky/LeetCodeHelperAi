@@ -15,54 +15,29 @@ export const SignIn: React.FC<SignInProps> = ({ onSwitchToSignUp, onSignInSucces
   const { showToast } = useToast()
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     
     if (!email || !password) {
-      showToast("Error", "Please fill in all fields", "error");
-      return;
+      showToast("Error", "Please fill in all fields", "error")
+      return
     }
-  
-    setIsLoading(true);
+
+    setIsLoading(true)
     
     try {
-      const { data, error } = await signInWithEmail(email, password);
+      const { data, error } = await signInWithEmail(email, password)
       
       if (error) {
-        throw error;
+        throw error
       }
       
-      showToast("Success", "Signed in successfully", "success");
-      
-      // IMPORTANT: Force window visibility right after authentication
-      if (window.electronAPI && typeof window.electronAPI.forceShowWindow === 'function') {
-        console.log("Forcing window visibility after login");
-        
-        // Call multiple times with delays for reliability
-        window.electronAPI.forceShowWindow().catch((error: any) => {
-          console.error("First attempt to force window visibility failed:", error);
-        });
-        
-        // Second attempt after a short delay
-        setTimeout(() => {
-          window.electronAPI.forceShowWindow().catch((error: any) => {
-            console.error("Second attempt to force window visibility failed:", error);
-          });
-        }, 500);
-        
-        // Third attempt after a longer delay
-        setTimeout(() => {
-          window.electronAPI.forceShowWindow().catch((error: any) => {
-            console.error("Third attempt to force window visibility failed:", error);
-          });
-        }, 1500);
-      }
-      
-      onSignInSuccess();
+      showToast("Success", "Signed in successfully", "success")
+      onSignInSuccess()
     } catch (error: any) {
-      console.error('Sign in error:', error);
-      showToast("Error", error.message || "Failed to sign in", "error");
+      console.error('Sign in error:', error)
+      showToast("Error", error.message || "Failed to sign in", "error")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 

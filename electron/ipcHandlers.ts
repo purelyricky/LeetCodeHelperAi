@@ -387,14 +387,4 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
       return { success: false, error: "Failed to close window" };
     }
   });
-  ipcMain.handle("force-show-window", () => {
-    try {
-      deps.forceShowWindow(); // Changed this line
-      return { success: true };
-    } catch (error) {
-      console.error("Error forcing window visibility:", error);
-      return { success: false, error: "Failed to force window visibility" };
-    }
-  });
-
 }

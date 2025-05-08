@@ -1,5 +1,5 @@
 import { globalShortcut, app } from "electron"
-import { IShortcutsHelperDeps, state } from "./main"
+import { IShortcutsHelperDeps } from "./main"
 import { configHelper } from "./ConfigHelper"
 
 export class ShortcutsHelper {
@@ -12,53 +12,27 @@ export class ShortcutsHelper {
   private adjustOpacity(delta: number): void {
     const mainWindow = this.deps.getMainWindow();
     if (!mainWindow) return;
-  
+    
     let currentOpacity = mainWindow.getOpacity();
-    console.log(`Current opacity before adjustment: ${currentOpacity}`);
-  
-    // IMPROVED: Much more aggressive increase when opacity is very low
-    let newOpacity;
-    if (currentOpacity < 0.3 && delta > 0) {
-      // When increasing from very low opacity (nearly invisible),
-      // jump straight to 1.0 for immediate visibility
-      newOpacity = 1.0;
-      console.log("Low opacity detected, jumping to full opacity for immediate visibility");
-    } else {
-      // Normal adjustments with safeguards
-      newOpacity = Math.max(0.1, Math.min(1.0, currentOpacity + delta));
-    }
-  
+    let newOpacity = Math.max(0.1, Math.min(1.0, currentOpacity + delta));
     console.log(`Adjusting opacity from ${currentOpacity} to ${newOpacity}`);
-  
-    // Apply opacity change
+    
     mainWindow.setOpacity(newOpacity);
-  
-    // Save the opacity setting to config
+    
+    // Save the opacity setting to config without re-initializing the client
     try {
-      configHelper.setOpacity(newOpacity);
+      const config = configHelper.loadConfig();
+      config.opacity = newOpacity;
+      configHelper.saveConfig(config);
     } catch (error) {
       console.error('Error saving opacity to config:', error);
     }
-  
-    // Enhanced visibility handling - make sure window becomes visible and active
-    if (newOpacity > 0.1) {
-      console.log("Opacity increased, ensuring window is visible and active");
-      
-      // IMPORTANT: The ordering here matters
-      mainWindow.show();
-      mainWindow.moveTop();
-      
-      // Ensure proper focus
-      setTimeout(() => {
-        if (!mainWindow.isDestroyed()) {
-          mainWindow.focus();
-        }
-      }, 50);
-      
-      state.isWindowVisible = true;
+    
+    // If we're making the window visible, also make sure it's shown and interaction is enabled
+    if (newOpacity > 0.1 && !this.deps.isVisible()) {
+      this.deps.toggleMainWindow();
     }
   }
-
 
   public registerGlobalShortcuts(): void {
     globalShortcut.register("CommandOrControl+H", async () => {
@@ -147,7 +121,7 @@ export class ShortcutsHelper {
       console.log("Command/Ctrl + ] pressed. Increasing opacity.")
       this.adjustOpacity(0.1)
     })
-
+    
     // Zoom controls
     globalShortcut.register("CommandOrControl+-", () => {
       console.log("Command/Ctrl + - pressed. Zooming out.")
@@ -157,7 +131,7 @@ export class ShortcutsHelper {
         mainWindow.webContents.setZoomLevel(currentZoom - 0.5)
       }
     })
-
+    
     globalShortcut.register("CommandOrControl+0", () => {
       console.log("Command/Ctrl + 0 pressed. Resetting zoom.")
       const mainWindow = this.deps.getMainWindow()
@@ -165,7 +139,7 @@ export class ShortcutsHelper {
         mainWindow.webContents.setZoomLevel(0)
       }
     })
-
+    
     globalShortcut.register("CommandOrControl+=", () => {
       console.log("Command/Ctrl + = pressed. Zooming in.")
       const mainWindow = this.deps.getMainWindow()
@@ -174,7 +148,7 @@ export class ShortcutsHelper {
         mainWindow.webContents.setZoomLevel(currentZoom + 0.5)
       }
     })
-
+    
     // Delete last screenshot shortcut
     globalShortcut.register("CommandOrControl+L", () => {
       console.log("Command/Ctrl + L pressed. Deleting last screenshot.")
@@ -184,39 +158,15 @@ export class ShortcutsHelper {
         mainWindow.webContents.send("delete-last-screenshot")
       }
     })
-
+    
     globalShortcut.register("CommandOrControl+T", () => {
       console.log("Command/Ctrl + T pressed. Toggling click-through mode.")
       this.deps.toggleClickThrough()
     })
-
+    
     // Unregister shortcuts when quitting
     app.on("will-quit", () => {
       globalShortcut.unregisterAll()
     })
-
-    globalShortcut.register("CommandOrControl+Shift+V", () => {
-      console.log("EMERGENCY VISIBILITY triggered with Cmd/Ctrl+Shift+V");
-      const mainWindow = this.deps.getMainWindow();
-      if (mainWindow) {
-        // Directly set opacity to 1.0 and force window to be visible
-        mainWindow.setOpacity(1.0);
-        mainWindow.show();
-        mainWindow.moveTop();
-        mainWindow.focus();
-        
-        // Update state and config
-        state.isWindowVisible = true;
-        configHelper.setOpacity(1.0);
-        
-        // Also call the main forceShowWindow for complete activation
-        this.deps.forceShowWindow();
-      }
-    })
-    // Add the existing force visibility shortcut
-    globalShortcut.register("CommandOrControl+Shift+B", () => {
-      console.log("Command/Ctrl + Shift + B pressed. Forcing window visibility.");
-      this.deps.forceShowWindow();
-    });
   }
 }

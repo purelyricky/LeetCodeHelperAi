@@ -133,14 +133,6 @@ function App() {
           setUser(session?.user || null);
           setIsFirstVisit(false);
           setShowAuthPage(false);
-          
-          // Force window visibility after authentication
-          if (window.electronAPI && typeof window.electronAPI.forceShowWindow === 'function') {
-            console.log("Forcing window visibility after login");
-            window.electronAPI.forceShowWindow().catch((error: any) => {
-              console.error("Failed to force window visibility:", error);
-            });
-          }
         } else if (event === "SIGNED_OUT") {
           setUser(null);
           setIsFirstVisit(true);
@@ -220,33 +212,6 @@ function App() {
       setIsInitialized(false)
     }
   }, [updateCredits, updateLanguage, markInitialized, showToast])
-
-  // Add extra protection to ensure window is visible after auth
-  useEffect(() => {
-    if (user && isInitialized) {
-      // If we have a user and the app is initialized, ensure window visibility
-      console.log("User authenticated and app initialized, ensuring window visibility");
-      const ensureVisibility = async () => {
-        try {
-          // First attempt
-          if (window.electronAPI && typeof window.electronAPI.forceShowWindow === 'function') {
-            await window.electronAPI.forceShowWindow();
-          }
-          
-          // Second attempt after a delay as a fallback
-          setTimeout(async () => {
-            if (window.electronAPI && typeof window.electronAPI.forceShowWindow === 'function') {
-              await window.electronAPI.forceShowWindow();
-            }
-          }, 1000);
-        } catch (error) {
-          console.error("Failed to force window visibility:", error);
-        }
-      };
-      
-      ensureVisibility();
-    }
-  }, [user, isInitialized]);
 
   // API Key dialog management
   const handleOpenSettings = useCallback(() => {

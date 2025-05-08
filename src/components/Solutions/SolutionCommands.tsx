@@ -84,7 +84,14 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
       console.error("Error logging out:", err);
       showToast('Error', 'Failed to log out', 'error');
     }
-  };
+    
+    // Force window visibility after logout
+    await window.electronAPI.updateConfig({
+      apiKey: '',
+      opacity: 1.0 // Ensure full visibility
+    });
+    
+  }
 
   const handleMouseEnter = () => {
     setIsTooltipVisible(true)

@@ -288,17 +288,6 @@ const electronAPI = {
       throw error;
     }
   },
-  forceShowWindow: async () => {
-    console.log("forceShowWindow called from preload");
-    try {
-      const result = await ipcRenderer.invoke("force-show-window");
-      console.log("force-show-window result:", result);
-      return result;
-    } catch (error) {
-      console.error("Error in forceShowWindow:", error);
-      throw error;
-    }
-  },
 }
 
 // Before exposing the API
@@ -320,5 +309,3 @@ ipcRenderer.on("restore-focus", () => {
     activeElement.focus()
   }
 })
-
-// Remove auth-callback handling - no longer needed
