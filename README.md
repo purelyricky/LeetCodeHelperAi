@@ -127,12 +127,6 @@ Inspired by and special thanks to [Roy](https://x.com/im_roy_lee) for the origin
 - No data collection
 - Secure, encrypted configuration
 
-## 🔒 Privacy & Security
-
-- Local API key storage
-- No data collection without consent
-- Secure, encrypted configuration
-
 ## 🔔 Stay Updated
 
 ### Release Notifications
