@@ -13,7 +13,7 @@
 
 ## Overview
 
-LeetCode Helper is an innovative desktop application designed to transform your algorithm and data structures learning experience. By leveraging advanced AI technologies, this app provides comprehensive, educational solutions to coding problems, helping you understand not just the solution, but the underlying concepts and problem-solving strategies.
+LeetCode Helper is an innovative desktop application designed to transform your algorithm and data structure learning experience. By leveraging advanced AI technologies, this app provides comprehensive, educational solutions to coding problems, helping you understand not just the solution but also the underlying concepts and problem-solving strategies.
 
 
 ## 🌟 Key Features
